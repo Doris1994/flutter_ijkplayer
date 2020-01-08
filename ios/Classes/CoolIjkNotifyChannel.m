@@ -11,12 +11,12 @@
 }
 
 - (instancetype)initWithController:(IJKFFMoviePlayerController *)controller textureId:(int64_t)textureId
-                         registrar:(NSObject <FlutterPluginRegistrar> *)registrar {
+                         messenger:(NSObject<FlutterBinaryMessenger> * _Nonnull)messenger{
     self = [super init];
     if (self) {
         self.controller = controller;
         self.textureId = textureId;
-        self.registrar = registrar;
+        self.messenger = messenger;
         [self initial];
     }
 
@@ -24,14 +24,14 @@
 }
 
 + (instancetype)channelWithController:(IJKFFMoviePlayerController *)controller textureId:(int64_t)textureId
-                            registrar:(NSObject <FlutterPluginRegistrar> *)registrar {
-    return [[self alloc] initWithController:controller textureId:textureId registrar:registrar];
+                            messenger:(NSObject<FlutterBinaryMessenger> * _Nullable)messenger {
+    return [[self alloc] initWithController:controller textureId:textureId messenger:messenger];
 }
 
 
 - (void)initial {
     NSString *channelName = [NSString stringWithFormat:@"top.kikt/ijkplayer/event/%lli", self.textureId];
-    channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:[self.registrar messenger]];
+    channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:self.messenger];
     [self registerObserver];
 }
 
@@ -61,10 +61,10 @@
                                                  name:IJKMPMoviePlayerPlaybackStateDidChangeNotification
                                                object:_controller];
 
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(movieRotationChange:)
-                                                 name:IJKMPMoviePlayerVideoRotationNotification
-                                               object:_controller];
+    // [[NSNotificationCenter defaultCenter] addObserver:self
+    //                                          selector:@selector(movieRotationChange:)
+    //                                              name:IJKMPMoviePlayerVideoRotationNotification
+    //                                            object:_controller];
 }
 
 - (void)unregisterObservers {
@@ -80,9 +80,9 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self
                                                     name:IJKMPMoviePlayerPlaybackStateDidChangeNotification
                                                   object:_controller];
-    [[NSNotificationCenter defaultCenter] removeObserver:self
-                                                    name:IJKMPMoviePlayerVideoRotationNotification
-                                                  object:_controller];
+    // [[NSNotificationCenter defaultCenter] removeObserver:self
+    //                                                 name:IJKMPMoviePlayerVideoRotationNotification
+    //                                               object:_controller];
 }
 
 - (NSDictionary *)getInfo {
@@ -127,9 +127,9 @@
 }
 
 - (void)movieRotationChange:(NSNotification *)notification {
-    int rotate = [[[notification userInfo] valueForKey:IJKMPMoviePlayerVideoRotationRotateUserInfoKey] intValue];
-    [_infoDelegate setDegree:rotate];
-    [channel invokeMethod:@"rotateChanged" arguments:[self getInfo]];
+    // int rotate = [[[notification userInfo] valueForKey:IJKMPMoviePlayerVideoRotationRotateUserInfoKey] intValue];
+    // [_infoDelegate setDegree:rotate];
+    // [channel invokeMethod:@"rotateChanged" arguments:[self getInfo]];
 }
 
 @end

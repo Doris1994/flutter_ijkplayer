@@ -6,23 +6,23 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - Flutter (from `.symlinks/flutter/ios`)
-  - flutter_ijkplayer (from `/Users/kmww/WorkSpace/Flutter-OpenSourceCode/flutter_ijkplayer/ios/flutter_ijkplayer.podspec`)
-  - photo_manager (from `/Users/kmww/.pub-cache/hosted/pub.dartlang.org/photo_manager-0.3.5/ios/photo_manager.podspec`)
+  - Flutter (from `Flutter`)
+  - flutter_ijkplayer (from `.symlinks/plugins/flutter_ijkplayer/ios`)
+  - photo_manager (from `.symlinks/plugins/photo_manager/ios`)
 
 EXTERNAL SOURCES:
   Flutter:
-    :path: ".symlinks/flutter/ios"
+    :path: Flutter
   flutter_ijkplayer:
-    :path: "/Users/kmww/WorkSpace/Flutter-OpenSourceCode/flutter_ijkplayer/ios/flutter_ijkplayer.podspec"
+    :path: ".symlinks/plugins/flutter_ijkplayer/ios"
   photo_manager:
-    :path: "/Users/kmww/.pub-cache/hosted/pub.dartlang.org/photo_manager-0.3.5/ios/photo_manager.podspec"
+    :path: ".symlinks/plugins/photo_manager/ios"
 
 SPEC CHECKSUMS:
   Flutter: 0e3d915762c693b495b44d77113d4970485de6ec
   flutter_ijkplayer: bc24b4963583375036a5be8df694b1131a566863
   photo_manager: d47ddf6cb25cbfa837dc334540eb9a99b208e191
 
-PODFILE CHECKSUM: a14c63eb48a9d676ed6d876506b3258fd9c85235
+PODFILE CHECKSUM: 3dbe063e9c90a5d7c9e4e76e70a821b9e2c1d271
 
 COCOAPODS: 1.8.3

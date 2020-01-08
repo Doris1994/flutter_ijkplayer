@@ -102,7 +102,9 @@ class IjkMediaController
       uri: url,
       headers: headers,
     );
-    _ijkStatus = IjkStatus.prepared;
+    if(autoPlay == false){
+       _ijkStatus = IjkStatus.prepared;
+    }
   }
 
   /// set asset DataSource
@@ -116,7 +118,9 @@ class IjkMediaController
     _ijkStatus = IjkStatus.preparing;
     await _initDataSource(autoPlay);
     await _plugin?.setAssetDataSource(name, package);
-    _ijkStatus = IjkStatus.prepared;
+     if(autoPlay == false){
+       _ijkStatus = IjkStatus.prepared;
+    }
   }
 
   /// set file DataSource
@@ -129,7 +133,9 @@ class IjkMediaController
     _ijkStatus = IjkStatus.preparing;
     await _initDataSource(autoPlay);
     await _plugin?.setFileDataSource(file.absolute.path);
-    _ijkStatus = IjkStatus.prepared;
+    if(autoPlay == false){
+       _ijkStatus = IjkStatus.prepared;
+    }
   }
 
   /// Set datasource with [DataSource]
@@ -212,7 +218,7 @@ class IjkMediaController
     LogUtils.info("$this play");
     await _plugin?.play();
     refreshVideoInfo();
-    _ijkStatus = IjkStatus.playing;
+    _ijkStatus = IjkStatus.preparing;
   }
 
   /// pause media

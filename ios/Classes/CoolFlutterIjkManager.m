@@ -4,11 +4,13 @@
 
 #import "CoolFlutterIjkManager.h"
 #import "CoolFlutterIJK.h"
+#import "CoolFlutterIJKFactory.h"
 #import <IJKMediaFramework/IJKMediaFramework.h>
 #import "CoolIjkOption.h"
 
 @implementation CoolFlutterIjkManager {
     NSMutableDictionary<NSNumber *, CoolFlutterIJK *> *dict;
+    CoolIjkViewFactory *factory;
 }
 
 
@@ -17,6 +19,8 @@
     if (self) {
         self.registrar = registrar;
         dict = [NSMutableDictionary new];
+        factory  = [[CoolIjkViewFactory alloc] initWithMessenger:registrar.messenger];
+        [registrar registerViewFactory:factory withId:@"plugins.flutter.io/ijkplayer"];
     }
 
     return self;
@@ -27,8 +31,12 @@
 }
 
 - (int64_t)createWithCall:(FlutterMethodCall*) call {
-    NSArray<CoolIjkOption*>* options = [self getOptionsFromCall:call];
-    CoolFlutterIJK *ijk = [CoolFlutterIJK ijkWithRegistrar:self.registrar];
+    NSArray<CoolIjkOption*> *options = [self getOptionsFromCall:call];
+    CoolFlutterIJK *ijk = 
+    (CoolFlutterIJK *)factory.platformView;
+    if(ijk.isDisposed){
+        return -1;
+    }
     ijk.options = options;
     NSNumber *number = @([ijk id]);
     dict[number] = ijk;

@@ -8,39 +8,51 @@
 #import <AVFoundation/AVFoundation.h>
 #import <libkern/OSAtomic.h>
 
-@interface CoolFlutterIJK () <FlutterTexture, KKIjkNotifyDelegate>
+@interface CoolFlutterIJK () <KKIjkNotifyDelegate>
+@property(nonatomic)int64_t viewId;
+@property(nonatomic, assign)CGRect viewRect;
 @end
 
 @implementation CoolFlutterIJK {
-    int64_t textureId;
-    CADisplayLink *displayLink;
-    NSObject <FlutterTextureRegistry> *textures;
+    //int64_t textureId;
+    //CADisplayLink *displayLink;
+    //NSObject <FlutterTextureRegistry> *textures;
+    UIView *contentView;
     IJKFFMoviePlayerController *controller;
-    CVPixelBufferRef latestPixelBuffer;
+    //CVPixelBufferRef latestPixelBuffer;
     FlutterMethodChannel *channel;
     CoolIjkNotifyChannel *notifyChannel;
     int degree;
     CoolFlutterResult *prepareResult;
 }
 
-- (instancetype)initWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
-    self = [super init];
-    if (self) {
-        self.registrar = registrar;
-        textures = [self.registrar textures];
-        textureId = [textures registerTexture:self];
-        NSString *channelName = [NSString stringWithFormat:@"top.kikt/ijkplayer/%lli", textureId];
-        channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:[registrar messenger]];
+- (instancetype)initWithWithFrame:(CGRect)frame viewIdentifier:(int64_t)viewId arguments:(id)args binaryMessenger:(NSObject<FlutterBinaryMessenger> *)messenger{
+    if ([super init]) {
+        NSDictionary *dic = args;
+        NSLog(@"dic = %@", dic);
+        self.viewRect = frame;
+        self.viewId = viewId;
+        self.messenger = messenger;
+        NSString *channelName = [NSString stringWithFormat:@"top.kikt/ijkplayer/%lli", self.viewId];
+        channel = [FlutterMethodChannel methodChannelWithName:channelName binaryMessenger:messenger];
         __weak typeof(&*self) weakSelf = self;
         [channel setMethodCallHandler:^(FlutterMethodCall *call, FlutterResult result) {
             [weakSelf handleMethodCall:call result:result];
         }];
         self.isDisposed = NO;
     }
-
+    
     return self;
 }
 
+-(UIView *)view{
+    if(!contentView){
+        contentView = [[UIView alloc] initWithFrame:self.viewRect];
+        contentView.backgroundColor = [UIColor lightGrayColor];
+        contentView.autoresizesSubviews = YES;
+    }
+    return contentView;
+}
 
 - (void)dispose {
     if(self.isDisposed){
@@ -48,15 +60,18 @@
     }
     self.isDisposed = YES;
     [notifyChannel dispose];
-    [[self.registrar textures] unregisterTexture:self.id];
+    // [[self.registrar textures] unregisterTexture:self.id];
+    channel = nil;
     [controller stop];
     [controller shutdown];
+    [controller.view removeFromSuperview];
     controller = nil;
-    displayLink.paused = YES;
-    [displayLink invalidate];
+    // displayLink.paused = YES;
+    // [displayLink invalidate];
 }
 
 - (void)handleMethodCall:(FlutterMethodCall *)call result:(FlutterResult)result {
+    NSLog(@"call.method = %@", call.method);
     if(self.isDisposed){
         return;
     }
@@ -131,38 +146,52 @@
     return call.arguments;
 }
 
-+ (instancetype)ijkWithRegistrar:(NSObject <FlutterPluginRegistrar> *)registrar {
-    return [[self alloc] initWithRegistrar:registrar];
-}
-
 - (int64_t)id {
-    return textureId;
+    return self.viewId;
 }
 
 - (void)play {
     [controller play];
-    if (displayLink) {
-        displayLink.paused = NO;
-    }
+    // if (displayLink) {
+    //     displayLink.paused = NO;
+    // }
 }
 
 - (void)pause {
     [controller pause];
-    if (displayLink) {
-        displayLink.paused = YES;
-    }
+    // if (displayLink) {
+    //     displayLink.paused = YES;
+    // }
 }
 
 - (void)stop {
     [controller stop];
-    if (displayLink) {
-        displayLink.paused = NO;
-    }
+    // if (displayLink) {
+    //     displayLink.paused = NO;
+    // }
 }
 
 - (void)setDataSourceWithController:(IJKFFMoviePlayerController *)ctl result:(CoolFlutterResult *)result {
     if (ctl) {
         controller = ctl;
+        controller.view.backgroundColor = [UIColor blackColor];
+        controller.view.autoresizingMask = UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleHeight;
+        controller.scalingMode = IJKMPMovieScalingModeAspectFit;
+
+        NSArray *subviews =  [self view].subviews;
+        for (UIView *view in subviews) {
+            [view removeFromSuperview];
+        }
+        [contentView addSubview:controller.view];
+        controller.view.frame = CGRectMake(0, 0, contentView.bounds.size.width, contentView.bounds.size.height);
+        controller.shouldAutoplay = YES;
+        #ifdef DEBUG
+            [IJKFFMoviePlayerController setLogReport:YES];
+            [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEFAULT];
+        #else
+            [IJKFFMoviePlayerController setLogReport:NO];
+            [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
+        #endif
         [self prepare:result];
     }
 }
@@ -244,7 +273,7 @@
     }
     controller = [[IJKFFMoviePlayerController alloc] initWithContentURLString:uri withOptions:options];
 
-    [self prepare:result];
+    [self setDataSourceWithController:controller result:result];
 }
 
 - (void)setDegree:(int)d {
@@ -255,17 +284,17 @@
 - (void)prepare:(CoolFlutterResult *)result {
     prepareResult = result;
     [controller prepareToPlay];
-    if (displayLink) {
-        displayLink.paused = YES;
-        [displayLink invalidate];
-        displayLink = nil;
-    }
+    // if (displayLink) {
+    //     displayLink.paused = YES;
+    //     [displayLink invalidate];
+    //     displayLink = nil;
+    // }
 
-    displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(onDisplayLink:)];
-    [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+    // displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(onDisplayLink:)];
+    // [displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 
-    notifyChannel = [CoolIjkNotifyChannel channelWithController:controller textureId:textureId registrar:self.registrar];
-    notifyChannel.infoDelegate = self;
+     notifyChannel = [CoolIjkNotifyChannel channelWithController:controller textureId:[self id] messenger:self.messenger];
+     notifyChannel.infoDelegate = self;
 }
 
 - (void)onLoadStateChange {
@@ -278,18 +307,18 @@
 
 
 - (IJKFFMoviePlayerController *)createControllerWithAssetName:(NSString *)assetName pkg:(NSString *)pkg {
-    NSString *asset;
-    if (!pkg) {
-        asset = [self.registrar lookupKeyForAsset:assetName];
-    } else {
-        asset = [self.registrar lookupKeyForAsset:assetName fromPackage:pkg];
-    }
-    NSString *path = [[NSBundle mainBundle] pathForResource:asset ofType:nil];
-    NSURL *url = [NSURL fileURLWithPath:path];
+    // NSString *asset;
+    // if (!pkg) {
+    //     asset = [self.registrar lookupKeyForAsset:assetName];
+    // } else {
+    //     asset = [self.registrar lookupKeyForAsset:assetName fromPackage:pkg];
+    // }
+    // NSString *path = [[NSBundle mainBundle] pathForResource:asset ofType:nil];
+    // NSURL *url = [NSURL fileURLWithPath:path];
 
     IJKFFOptions *options = [self createOption];
 
-    return [[IJKFFMoviePlayerController alloc] initWithContentURL:url withOptions:options];
+    return [[IJKFFMoviePlayerController alloc] initWithContentURL:nil withOptions:options];
 }
 
 
@@ -303,21 +332,21 @@
     [controller setCurrentPlaybackTime:target];
 }
 
-- (void)onDisplayLink:(CADisplayLink *)link {
-    [textures textureFrameAvailable:textureId];
-}
+// - (void)onDisplayLink:(CADisplayLink *)link {
+//     [textures textureFrameAvailable:textureId];
+// }
 
 - (CVPixelBufferRef _Nullable)copyPixelBuffer {
-    CVPixelBufferRef newBuffer = [controller framePixelbuffer];
-    if (newBuffer) {
-        CFRetain(newBuffer);
-        CVPixelBufferRef pixelBuffer = latestPixelBuffer;
-        while (!OSAtomicCompareAndSwapPtrBarrier(pixelBuffer, newBuffer, (void **) &latestPixelBuffer)) {
-            pixelBuffer = latestPixelBuffer;
-        }
+    // CVPixelBufferRef newBuffer = [controller framePixelbuffer];
+    // if (newBuffer) {
+    //     CFRetain(newBuffer);
+    //     CVPixelBufferRef pixelBuffer = latestPixelBuffer;
+    //     while (!OSAtomicCompareAndSwapPtrBarrier(pixelBuffer, newBuffer, (void **) &latestPixelBuffer)) {
+    //         pixelBuffer = latestPixelBuffer;
+    //     }
 
-        return pixelBuffer;
-    }
+    //     return pixelBuffer;
+    // }
     return NULL;
 }
 
@@ -333,7 +362,7 @@
     info.currentPosition = currentPlaybackTime;
     info.isPlaying = [controller isPlaying];
     info.degree = degree;
-    info.tcpSpeed = [controller tcpSpeed];
+    //info.tcpSpeed = [controller tcpSpeed];
     info.outputFps = [controller fpsAtOutput];
 
     return info;

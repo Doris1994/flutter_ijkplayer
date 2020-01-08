@@ -9,7 +9,7 @@
 @class CoolVideoInfo;
 
 @protocol KKIjkNotifyDelegate
-- (CoolVideoInfo *)getInfo;
+- (CoolVideoInfo *_Nullable)getInfo;
 
 - (void)setDegree:(int)newDegree;
 
@@ -18,19 +18,17 @@
 
 @interface CoolIjkNotifyChannel : NSObject
 
-@property(nonatomic, strong) IJKFFMoviePlayerController *controller;
+@property(nonatomic, strong) IJKFFMoviePlayerController * _Nullable controller;
 
 @property(nonatomic, assign) int64_t textureId;
 
-@property(nonatomic, strong) NSObject <FlutterPluginRegistrar> *registrar;
+@property(nonatomic)NSObject<FlutterBinaryMessenger>* _Nullable messenger;
 
-@property(nonatomic, weak) NSObject <KKIjkNotifyDelegate> *infoDelegate;
+@property(nonatomic, weak) NSObject <KKIjkNotifyDelegate> * _Nullable infoDelegate;
 
-- (instancetype)initWithController:(IJKFFMoviePlayerController *)controller textureId:(int64_t)textureId
-                         registrar:(NSObject <FlutterPluginRegistrar> *)registrar;
+- (instancetype _Nullable )initWithController:(IJKFFMoviePlayerController *_Nullable)controller textureId:(int64_t)textureId messenger:(NSObject<FlutterBinaryMessenger>*_Nonnull)messenger;
 
-+ (instancetype)channelWithController:(IJKFFMoviePlayerController *)controller textureId:(int64_t)textureId
-                            registrar:(NSObject <FlutterPluginRegistrar> *)registrar;
++ (instancetype _Nullable )channelWithController:(IJKFFMoviePlayerController *_Nullable)controller textureId:(int64_t)textureId messenger:(NSObject<FlutterBinaryMessenger>*_Nullable)messenger;
 
 
 - (void)dispose;

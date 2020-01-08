@@ -63,6 +63,8 @@ class DefaultIJKControllerWidget extends StatefulWidget {
   /// Callback in full screen, full screen when enter true, false to exit full screen.
   final void Function(bool enter) onFullScreen;
 
+  final void Function(bool show) onShowStatus;
+
   /// The UI of the controller.
   const DefaultIJKControllerWidget({
     Key key,
@@ -78,6 +80,7 @@ class DefaultIJKControllerWidget extends StatefulWidget {
     this.fullScreenType = FullScreenType.rotateBox,
     this.hideSystemBarOnFullScreen = true,
     this.onFullScreen,
+    this.onShowStatus,
   }) : super(key: key);
 
   @override
@@ -129,6 +132,9 @@ class DefaultIJKControllerWidgetState extends State<DefaultIJKControllerWidget>
     if (value == true) {
       controller.refreshVideoInfo();
     }
+    if(widget.onShowStatus != null) {
+      widget.onShowStatus(_isShow);
+    } 
   }
 
   bool get isShow => _isShow;

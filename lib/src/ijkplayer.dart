@@ -39,13 +39,15 @@ class IjkPlayer extends StatefulWidget {
 
   final StatusWidgetBuilder statusWidgetBuilder;
 
+  final VoidCallback onPlatformViewCreated;
+
   /// Main Classes of Library
   const IjkPlayer({
     Key key,
     @required this.mediaController,
     this.controllerWidgetBuilder = defaultBuildIjkControllerWidget,
     this.textureBuilder = buildDefaultIjkPlayer,
-    this.statusWidgetBuilder = IjkStatusWidget.buildStatusWidget,
+    this.statusWidgetBuilder = IjkStatusWidget.buildStatusWidget, this.onPlatformViewCreated,
   }) : super(key: key);
 
   @override
@@ -76,7 +78,22 @@ class IjkPlayerState extends State<IjkPlayer> {
 
   @override
   Widget build(BuildContext context) {
-    var video = StreamBuilder<int>(
+    var video;
+    if(Platform.isIOS){
+      video = UiKitView(
+        viewType: 'plugins.flutter.io/ijkplayer',
+        onPlatformViewCreated: (id){
+          //controller.textureId = id;
+          if(widget.onPlatformViewCreated != null){
+            widget.onPlatformViewCreated();
+          }
+        },
+      );
+    } else {
+      if(widget.onPlatformViewCreated != null){
+        widget.onPlatformViewCreated();
+      }
+      video = StreamBuilder<int>(
       stream: controller.textureIdStream,
       initialData: controller.textureId,
       builder: (context, snapshot) {
@@ -92,6 +109,7 @@ class IjkPlayerState extends State<IjkPlayer> {
             });
       },
     );
+    }
     var controllerWidget = widget.controllerWidgetBuilder?.call(controller);
     var statusWidget = buildIjkStateWidget();
     Widget stack = Stack(

@@ -4,6 +4,7 @@ import 'package:ijkplayer_example/page/index.dart';
 import 'package:oktoast/oktoast.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   IjkConfig.isLog = true;
 //  IjkConfig.level = LogLevel.verbose;
   await IjkManager.initIJKPlayer();

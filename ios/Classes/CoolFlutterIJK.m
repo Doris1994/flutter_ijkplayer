@@ -185,13 +185,13 @@
         [contentView addSubview:controller.view];
         controller.view.frame = CGRectMake(0, 0, contentView.bounds.size.width, contentView.bounds.size.height);
         controller.shouldAutoplay = YES;
-        #ifdef DEBUG
-            [IJKFFMoviePlayerController setLogReport:YES];
-            [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEFAULT];
-        #else
-            [IJKFFMoviePlayerController setLogReport:NO];
-            [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
-        #endif
+//        #ifdef DEBUG
+//            [IJKFFMoviePlayerController setLogReport:YES];
+//            [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
+//        #else
+//            [IJKFFMoviePlayerController setLogReport:NO];
+//            [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
+//        #endif
         [self prepare:result];
     }
 }

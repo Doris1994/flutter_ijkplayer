@@ -36,8 +36,8 @@ class VideoPlayerPageState extends State<VideoPlayerPage> {
         .addIjkPlayerOptions([TargetPlatform.iOS,TargetPlatform.android], createGeneralIJKOptions());
     mediaController
         .addIjkPlayerOptions([TargetPlatform.android], createAndroidIJKOptions());
-    mediaController
-        .addIjkPlayerOptions([TargetPlatform.iOS], createIOSIJKOptions());
+    // mediaController
+    //     .addIjkPlayerOptions([TargetPlatform.iOS], createIOSIJKOptions());
     await mediaController.setNetworkDataSource(
       widget.url,
       autoPlay: true

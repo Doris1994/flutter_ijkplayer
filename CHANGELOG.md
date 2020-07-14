@@ -1,3 +1,20 @@
+## 0.3.6
+
+New feature
+
+- Support playing video directly through photo_manager URL.
+
+Fix:
+
+- iOS
+
+  - Support hardware decoding in iOS.
+  - Fix hardware decoding memory leaks error.
+  - Support screenshot in hardware-decoding.
+
+- android
+  - [#204](https://github.com/CaiJingLong/flutter_ijkplayer/pull/204)
+
 ## 0.3.5+1
 
 To adapt to the new version of the flutter sdk check kt plugin.

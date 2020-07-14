@@ -346,6 +346,10 @@ class DefaultIJKControllerWidgetState extends State<DefaultIJKControllerWidget>
   void _onHorizontalDragStart(DragStartDetails details) async {
     var videoInfo = await controller.getVideoInfo();
     _calculator = _ProgressCalculator(details, videoInfo);
+    final rotateBoxProvider = _RotateBoxProvider.of(context);
+    if(rotateBoxProvider != null && rotateBoxProvider.quarterTurns == 1){
+      _calculator.replaceXToY = true;
+    }
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
@@ -519,6 +523,7 @@ class DefaultIJKControllerWidgetState extends State<DefaultIJKControllerWidget>
 
 class _ProgressCalculator {
   DragStartDetails startDetails;
+  bool replaceXToY = false;
   VideoInfo info;
 
   double dx;
@@ -526,7 +531,11 @@ class _ProgressCalculator {
   _ProgressCalculator(this.startDetails, this.info);
 
   String calcUpdate(DragUpdateDetails details) {
-    dx = details.globalPosition.dx - startDetails.globalPosition.dx;
+    if (replaceXToY) {
+      dx = details.globalPosition.dy - startDetails.globalPosition.dy;
+    } else {
+      dx = details.globalPosition.dx - startDetails.globalPosition.dx;
+    }
     var f = dx > 0 ? "+" : "-";
     var offset = getOffsetPosition().round().abs();
     return "$f${offset}s";

@@ -97,13 +97,17 @@ class IjkMediaController
     bool autoPlay = false,
   }) async {
     _ijkStatus = IjkStatus.preparing;
-    await _initDataSource(autoPlay);
-    await _plugin?.setNetworkDataSource(
-      uri: url,
-      headers: headers,
-    );
-    if(autoPlay == false){
-       _ijkStatus = IjkStatus.prepared;
+    try {
+      await _initDataSource(autoPlay);
+      await _plugin?.setNetworkDataSource(
+        uri: url,
+        headers: headers,
+      );
+      if (autoPlay == false) {
+        _ijkStatus = IjkStatus.prepared;
+      }
+    } catch (e) {
+      _ijkStatus = IjkStatus.setDatasourceFail;
     }
   }
 
@@ -118,8 +122,8 @@ class IjkMediaController
     _ijkStatus = IjkStatus.preparing;
     await _initDataSource(autoPlay);
     await _plugin?.setAssetDataSource(name, package);
-     if(autoPlay == false){
-       _ijkStatus = IjkStatus.prepared;
+    if (autoPlay == false) {
+      _ijkStatus = IjkStatus.prepared;
     }
   }
 
@@ -133,8 +137,26 @@ class IjkMediaController
     _ijkStatus = IjkStatus.preparing;
     await _initDataSource(autoPlay);
     await _plugin?.setFileDataSource(file.absolute.path);
-    if(autoPlay == false){
-       _ijkStatus = IjkStatus.prepared;
+    if (autoPlay == false) {
+      _ijkStatus = IjkStatus.prepared;
+    }
+  }
+
+  Future<void> setPhotoManagerDataSource(
+    String mediaUrl, {
+    bool autoPlay = false,
+  }) async {
+    assert(Platform.isAndroid || Platform.isIOS);
+    if (Platform.isIOS) {
+      final file = File.fromUri(Uri.parse(mediaUrl));
+      await setFileDataSource(file, autoPlay: autoPlay);
+      return;
+    }
+    if (Platform.isAndroid) {
+      _ijkStatus = IjkStatus.preparing;
+      await _initDataSource(autoPlay);
+      await _plugin?.setPhotoManagerUrl(mediaUrl);
+      _ijkStatus = IjkStatus.prepared;
     }
   }
 
@@ -161,6 +183,12 @@ class IjkMediaController
         await setNetworkDataSource(
           source._netWorkUrl,
           headers: source._headers,
+          autoPlay: autoPlay,
+        );
+        break;
+      case DataSourceType.photoManager:
+        await setPhotoManagerDataSource(
+          source._mediaUrl,
           autoPlay: autoPlay,
         );
         break;

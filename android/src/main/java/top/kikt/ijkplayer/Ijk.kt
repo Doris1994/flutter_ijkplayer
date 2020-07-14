@@ -2,12 +2,15 @@ package top.kikt.ijkplayer
 
 /// create 2019/3/7 by cai
 
-
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.AudioManager
 import android.net.Uri
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
+import androidx.annotation.RequiresApi
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry
 import top.kikt.ijkplayer.entity.IjkOption
@@ -16,6 +19,7 @@ import tv.danmaku.ijk.media.player.IjkMediaPlayer
 import tv.danmaku.ijk.media.player.TextureMediaPlayer
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.FileInputStream
 
 class Ijk(private val registry: PluginRegistry.Registrar, private val options: Map<String, Any>) {
 
@@ -30,9 +34,13 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
 
     private val notifyChannel: NotifyChannel = NotifyChannel(registry, id, this)
 
+    private val handler = Handler(Looper.getMainLooper())
+
     var degree = 0
 
     var isDisposed = false
+
+    private var tmpFile:File? = null
 
     init {
         textureMediaPlayer = TextureMediaPlayer(mediaPlayer)
@@ -71,6 +79,22 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
                         setUri("file://$path", hashMapOf()) { throwable ->
                             handleSetUriResult(throwable, result)
                         }
+                    }
+                }
+                "setPhotoManagerUrl" -> {
+                    val mediaUrl = call.argument<String>("mediaUrl")
+                    if (mediaUrl != null) {
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                            setUri("file://$mediaUrl", hashMapOf()) { throwable ->
+                                handleSetUriResult(throwable, result)
+                            }
+                        } else {
+                            setAndroidQUrl(mediaUrl){
+                                handleSetUriResult(it, result)
+                            }
+                        }
+                    } else {
+                        handleSetUriResult(Exception("没有找到资源"), result)
                     }
                 }
                 "play" -> {
@@ -118,6 +142,7 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
             }
         }
     }
+
 
     private val appContext: Context
         get() = registry.activity().application
@@ -194,8 +219,6 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
         val width = mediaPlayer.videoWidth
         val height = mediaPlayer.videoHeight
         val outputFps = mediaPlayer.videoOutputFramesPerSecond
-//        mediaPlayer.mediaInfo.mAudioDecoder
-//        mediaPlayer.mediaInfo.mVideoDecoder
         return Info(
                 duration = duration.toDouble() / 1000,
                 currentPosition = currentPosition.toDouble() / 1000,
@@ -214,24 +237,54 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
             result?.success(true)
         } else {
             throwable.printStackTrace()
-            result?.error("1", "set resource error", throwable)
+            result?.error("1", "set resource error", throwable.toString())
         }
     }
 
     private fun setUri(uriString: String, headers: Map<String, String>?, callback: (Throwable?) -> Unit) {
         try {
             val uri = Uri.parse(uriString)
-//            val scheme = uri.scheme
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-//                    (TextUtils.isEmpty(scheme) || scheme.equals("file", ignoreCase = true))) {
-//                val dataSource = FileMediaDataSource(File(uri.toString()))
-//                mediaPlayer.setDataSource(dataSource)
-//            } else {
             mediaPlayer.setDataSource(appContext, uri, headers)
-//            }
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
+
+            val timeoutRunnable = Runnable {
+                // to avoid 'Reply already submitted' exception
+                mediaPlayer.setOnPreparedListener(null)
+                callback(RuntimeException("Prepare timeout"))
+            }
+            handler.postDelayed(timeoutRunnable, 15 * 1000)
+            mediaPlayer.setOnPreparedListener {
+                handler.removeCallbacks(timeoutRunnable)
+                callback(null)
+            }
+
             mediaPlayer.prepareAsync()
-            callback(null)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            callback(e)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun setAndroidQUrl(mediaUri: String, callback: (Throwable?) -> Unit) {
+        try {
+            val inputStream = appContext.contentResolver.openInputStream(Uri.parse(mediaUri))
+                    ?: throw RuntimeException("Cannot open $mediaUri")
+            if (inputStream is FileInputStream) {
+                mediaPlayer.setDataSource(inputStream.fd)
+            } else {
+                throw RuntimeException("Cannot open $mediaUri")
+            }
+            val timeoutRunnable = Runnable {
+                mediaPlayer.setOnPreparedListener(null)
+                callback(RuntimeException("Prepare timeout"))
+            }
+            handler.postDelayed(timeoutRunnable, 15 * 1000)
+            mediaPlayer.setOnPreparedListener {
+                handler.removeCallbacks(timeoutRunnable)
+                callback(null)
+            }
+            mediaPlayer.prepareAsync()
         } catch (e: Exception) {
             e.printStackTrace()
             callback(e)
@@ -251,16 +304,21 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
                     }
             val assetManager = registry.context().assets
             val input = assetManager.open(asset)
-            val cacheDir = registry.context().cacheDir.absoluteFile.path
+            if (input is FileInputStream) {
+                mediaPlayer.setDataSource(input.fd)
+            } else {
+                val cacheDir = registry.context().cacheDir.absoluteFile.path
 
-            val fileName = Base64.encodeToString(asset.toByteArray(), Base64.DEFAULT)
-            val file = File(cacheDir, fileName)
-            file.outputStream().use { outputStream ->
-                input.use { inputStream ->
-                    inputStream.copyTo(outputStream)
+                val fileName = Base64.encodeToString(asset.toByteArray(), Base64.DEFAULT)
+                val file = File(cacheDir, fileName)
+                file.outputStream().use { outputStream ->
+                    input.use { inputStream ->
+                        inputStream.copyTo(outputStream)
+                    }
                 }
+                this.tmpFile = file
+                mediaPlayer.setDataSource(FileMediaDataSource(file))
             }
-            mediaPlayer.setDataSource(FileMediaDataSource(file))
             mediaPlayer.prepareAsync()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -274,6 +332,9 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
         }
         isDisposed = true
         tryCatchError {
+            if (tmpFile?.exists() == true) {
+                tmpFile?.delete()
+            }
             notifyChannel.dispose()
             methodChannel.setMethodCallHandler(null)
             textureMediaPlayer.stop()

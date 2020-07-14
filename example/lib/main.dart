@@ -17,13 +17,22 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  bool isInitPlugin = false;
+
   @override
   void initState() {
     super.initState();
+    Future.delayed(Duration.zero, () {
+      isInitPlugin = true;
+      setState(() {});
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!isInitPlugin) {
+      return Container();
+    }
     return OKToast(
       child: MaterialApp(
         home: IndexPage(),

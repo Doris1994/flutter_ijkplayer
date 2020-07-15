@@ -79,11 +79,9 @@ Set<IjkOption> createiOSIJKOptions() {
     IjkOption(IjkOptionCategory.player, "max_cached_durtion", 100),
     IjkOption(IjkOptionCategory.player, "infbuf", 1),
     IjkOption(IjkOptionCategory.player, "packet-buffering", 0),
-
     IjkOption(IjkOptionCategory.format, "probesize", 1024),
     IjkOption(IjkOptionCategory.format, "max-buffer-size", 1024 * 3),
     IjkOption(IjkOptionCategory.format, "analyzeduration", 1),
-
     IjkOption(IjkOptionCategory.codec, "skip_loop_filter", 0),
     IjkOption(IjkOptionCategory.codec, "skip_frame", 8),
   ].toSet();

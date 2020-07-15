@@ -185,6 +185,8 @@
         [contentView addSubview:controller.view];
         controller.view.frame = CGRectMake(0, 0, contentView.bounds.size.width, contentView.bounds.size.height);
         controller.shouldAutoplay = YES;
+        [IJKFFMoviePlayerController setLogReport:NO];
+        [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_SILENT];
 //        #ifdef DEBUG
 //            [IJKFFMoviePlayerController setLogReport:YES];
 //            [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];

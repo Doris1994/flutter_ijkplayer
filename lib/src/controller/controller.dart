@@ -53,7 +53,7 @@ class IjkMediaController
         options.addAll(opt);
       }
 
-      print("options = $options");
+      LogUtils.info("options = $options");
 
       var id = await _createIjk(options: options);
       this.textureId = id;

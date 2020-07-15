@@ -43,6 +43,8 @@ class Ijk(private val registry: PluginRegistry.Registrar, private val options: M
     private var tmpFile:File? = null
 
     init {
+        //mediaPlayer.setLogEnabled(false)
+        IjkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_SILENT)
         textureMediaPlayer = TextureMediaPlayer(mediaPlayer)
         configOptions()
         textureMediaPlayer.surfaceTexture = textureEntry.surfaceTexture()
